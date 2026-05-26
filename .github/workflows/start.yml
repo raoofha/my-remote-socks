@@ -1,0 +1,36 @@
+name: start
+on:
+  push:
+    paths:
+      - 'README.md'
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Prerequisite
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout --orphan latest_branch
+          openssl genrsa -out ~/keypair 2048
+          openssl rsa -in ~/keypair -pubout > keypair.pub
+          git add .
+          git commit -m "[skip ci]"
+          git branch -D main
+          git branch -m main
+          git branch --set-upstream-to=origin/main main
+          git push -f origin main
+
+          pushd $PWD
+          cd ~
+          wget -O single-file-x86_64-linux https://github.com/gildas-lormeau/single-file-cli/releases/download/v2.0.83/single-file-x86_64-linux
+          chmod +x single-file-x86_64-linux
+          popd
+
+      - name: Execute
+        run: |
+          bash README.md
